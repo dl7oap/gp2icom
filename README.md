@@ -28,18 +28,22 @@ to wait until gpredict have catch the new downlink frequency and the new matchin
 send to ic9700. You have to play around with this :)
 But a update rate of ~30ms in gpredict will work for SSB/CW, too, with this script.
 
-The pythonscript will only send necessary updates, to calm down the display.
+The pythonscript will only send necessary updates, to calm down the display and reduce load on the CAT interface. 
 Only frequency shift greater then a defined Hz will be send to the transceiver.
+Search in the file gp2ic9700.py for <code>FREQUENCY_OFFSET_UPLINK = </code> or <code>FREQUENCY_OFFSET_DOWNLINK =</code> 
+when you want to change the offset.
 
 At start the script always set:
 * with SSB the uplink in LSB and the downlink in USB. Most common satellites should work with this
-* with FM subtone 670 will be activated on uplink
+* with FM subtone 67 Hz will be activated on uplink
+* with FM will activate the AFC 
 * using CW the uplink is mode CW and the downlink will be USB
 * the script try to turn of repeater shifts (DUP+, DUP-)
 
 
 # Requirements
 
+* Linux or Windows 10
 * gpredict version 2.3.* (older should also possible)
 * python 3.7 (python 2.* will not work)
 * python modul pyserial and PyQt5
@@ -58,11 +62,18 @@ Here it is working with Linux (Ubuntu) and Windows 10.
 
 GUI:
 
-![gui](gui.png)
+Linux 
+![gui](gui_linux.png) and 
+Windows 10 
+![gui](gui_win10.png)
 
 # Configuration in gpredict
 
 ![gpredict](gpredict_configuration.png)
+
+<i>Hint: It doesn't matter for this script if VFO Up/Down is set to SUB/MAIN or MAIN/SUB. Both option will work.</i>
+
+![engage](engage.png)
 
 # Start the programm
 
@@ -73,6 +84,5 @@ or
 <code>pyton3 gp2ic9700.py</code>
 
 1. select a satellite
-2. start the loop
-3. start gpredict with a duplex trx on port 4532 and MAIN/SUB tracking a satellite
-4. editing the satellites.txt with your needs
+2. start gpredict with a duplex trx on port 4532 and MAIN/SUB tracking a satellite
+3. optional: editing the satellites.txt with your needs

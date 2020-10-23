@@ -16,8 +16,6 @@ Usage:
 
 '''
 
-
-
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 
@@ -25,6 +23,7 @@ import traceback
 import socket
 import sys
 import icom
+import time
 
 class Satellite:
     name = ""
@@ -97,6 +96,7 @@ class MainWindow(QMainWindow):
 
     isSatelliteDuplex = True
     isDownlinkConstant = False
+    isLoopActive = True
 
     satellites = []
 
@@ -268,36 +268,33 @@ class MainWindow(QMainWindow):
             comboSatellite.addItem(sat.name)
         comboSatellite.currentTextChanged.connect(self.on_combobox_changed)
 
-        buttonDoLoop = QPushButton("Start loop")
-        buttonDoLoop.pressed.connect(self.doLoop)
-
         buttonRitUp = QPushButton("RIT +25Hz")
         buttonRitUp.pressed.connect(self.setRitUp)
 
         buttonRitDown = QPushButton("RIT -25Hz")
         buttonRitDown.pressed.connect(self.setRitDown)
 
-        self.ritEdit = QLineEdit(self)
+        self.ritLabel = QLabel(self)
 
         layout.addWidget(comboSatellite, 0, 0)
-        layout.addWidget(buttonDoLoop, 0, 2)
+        #layout.addWidget(buttonDoLoop, 0, 2)
 
         layout.addWidget(buttonRitUp, 1, 0)
         layout.addWidget(buttonRitDown, 1, 1)
-        layout.addWidget(self.ritEdit, 1, 2)
+        layout.addWidget(self.ritLabel, 1, 2)
 
 
-        radiobutton = QRadioButton("Sat constant")
+        radiobutton = QRadioButton('Sat constant')
         radiobutton.setChecked(True)
-        radiobutton.country = "Sat constant"
-        radiobutton.setToolTip("Frequency on satellite transponder will be held constant")
+        radiobutton.country = 'Sat constant'
+        radiobutton.setToolTip('Frequency on satellite transponder will be held constant')
         radiobutton.toggled.connect(self.onRadioButtonSatelliteConstantClicked)
         layout.addWidget(radiobutton, 4, 0)
 
-        radiobutton = QRadioButton("Downlink constant")
+        radiobutton = QRadioButton('Downlink constant')
         radiobutton.setChecked(False)
-        radiobutton.country = "Downlink constant"
-        radiobutton.setToolTip("Frequency on the downlink will be held constant")
+        radiobutton.country = 'Downlink constant'
+        radiobutton.setToolTip('Frequency on the downlink will be held constant')
         radiobutton.toggled.connect(self.onRadioButtonDownlinkConstantClicked)
         layout.addWidget(radiobutton, 4, 1)
 
@@ -305,17 +302,16 @@ class MainWindow(QMainWindow):
         w = QWidget()
         w.setLayout(layout)
 
-        self.setWindowTitle("gpredict and ic9700")
+        self.setWindowTitle('gpredict and ic9700')
         self.setCentralWidget(w)
         self.show()
 
         self.threadpool = QThreadPool()
-        print("Multithreading with maximum %d threads" % self.threadpool.maxThreadCount())
 
-        self.timer = QTimer()
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self.recurring_timer)
-        self.timer.start()
+        worker = Worker(self.execute_main_loop)  # Any other args, kwargs are passed to the run function
+        # Execute
+        self.threadpool.start(worker)
+
 
     def onRadioButtonDownlinkConstantClicked(self):
         self.isDownlinkConstant = True
@@ -326,6 +322,8 @@ class MainWindow(QMainWindow):
     def on_combobox_changed(self, value):
         for sat in self.satellites:
             if sat.name == value:
+                self.isLoopActive = False
+                time.sleep(0.5)
 
                 ic9700.setSatelliteMode(False)
 
@@ -370,6 +368,7 @@ class MainWindow(QMainWindow):
                 else:
                     self.setStartSequenceSimplex()
 
+                self.isLoopActive = True
                 break
 
     def execute_main_loop(self, progress_callback):
@@ -395,99 +394,86 @@ class MainWindow(QMainWindow):
             conn, addr = sock_gpredict.accept()
             print('Connected by', addr)
             while 1:
-                data = conn.recv(1000)
-                print('\n######   LOOP   START   ######')
-                print('gpredict: ' + data.decode('utf-8').replace('\n', ''))
-                print('icom:', ic9700.getWhatIcomWantsToSay())  # TODO: Way not to read the download but to be informed
-                # changes, but get them directly from ICOM device if
-                # the user is using the dial knob
-                if not data:
-                    break
-                if self.rit != self.last_rit:
-                    ic9700.setRitFrequence(self.rit)
-                    self.last_rit = self.rit
-                if data[0] in [70, 73]:  # I, F
-                    # get downlink and uplink from gpredict
-                    # and set downlink and uplink to icom
-                    cut = data.decode('utf-8').split(' ')
-                    if data[0] == 70:  # F - gpredict ask for downlink
-                        if self.isDownlinkConstant:
-                            downlink = last_downlink
-                        else:
-                            downlink = cut[len(cut) - 1].replace('\n', '')
-                    if data[0] == 73:  # I - gpredict ask for uplink
-                        uplink = cut[len(cut) - 1].replace('\n', '')
-                    print('** gp2icom: last  ^ ' + last_uplink + ' v ' + last_downlink)
-                    print('** gp2icom: fresh ^ ' + uplink + ' v ' + downlink)
-                    # only if uplink or downlink changed > 0 10Hz Column, then update
-                    if (abs(int(last_uplink) - int(uplink)) > self.FREQUENCY_OFFSET_UPLINK):
-                        if self.isSatelliteDuplex:
-                            MainWindow.setUplink(self, uplink)
-                        else:
-                            MainWindow.setUplinkSimplex(self, uplink)
-                        last_uplink = uplink
-                    if not self.isDownlinkConstant:
-                        if (abs(int(last_downlink) - int(downlink)) > self.FREQUENCY_OFFSET_DOWNLINK):
-                            if self.isSatelliteDuplex:
-                                MainWindow.setDownlink(self, downlink)
+                if self.isLoopActive:
+                    data = conn.recv(1000)
+                    print('\n######   LOOP   START   ######')
+                    print('gpredict: ' + data.decode('utf-8').replace('\n', ''))
+                    print('icom:', ic9700.getWhatIcomWantsToSay())
+                    ''' TODO: getWhatIcomWantsToSay is maybe a way not to read the download permanently
+                    to detect dailing of user, but be informed by TRX when user has set a new frequence'''
+                    if not data:
+                        break
+                    if self.rit != self.last_rit:
+                        ic9700.setRitFrequence(self.rit)
+                        self.last_rit = self.rit
+                        self.ritLabel.setText(str(self.rit))
+                    if data[0] in [70, 73]:  # I, F
+                        # get downlink and uplink from gpredict
+                        # and set downlink and uplink to icom
+                        cut = data.decode('utf-8').split(' ')
+                        if data[0] == 70:  # F - gpredict ask for downlink
+                            if self.isDownlinkConstant:
+                                downlink = last_downlink
                             else:
-                                MainWindow.setDownlinkSimplex(self, downlink)
-                            last_downlink = downlink
-                    conn.send(b'RPRT 0')  # Return Data OK to gpredict
-                elif data[0] in [102, 105]:  # i, f
-                    # read downlink or uplink from icom
-                    # and send it to gpredict
-                    if not self.isSatelliteDuplex:
-                        conn.send(b'RPRT')
-                    else:
-                        if data[0] == 102:  # f - gpredict ask for downlink
-                            print('** gpredict ask for downlink ')
-                            # ic9700.setVFO('SUB')
-                            actual_sub_frequency = ic9700.getFrequence()  # TODO: das ist suboptimal für 1,2 GHz
-                            if 1 == 1:  # TODO hier war die Prüfung, ob die Frequenz erfolgreich ausgelesen werden konnte!
+                                downlink = cut[len(cut) - 1].replace('\n', '')
+                        if data[0] == 73:  # I - gpredict ask for uplink
+                            uplink = cut[len(cut) - 1].replace('\n', '')
+                        print('** gp2icom: last  ^ ' + last_uplink + ' v ' + last_downlink)
+                        print('** gp2icom: fresh ^ ' + uplink + ' v ' + downlink)
+                        # only if uplink or downlink changed > 0 10Hz Column, then update
+                        if (abs(int(last_uplink) - int(uplink)) > self.FREQUENCY_OFFSET_UPLINK):
+                            if self.isSatelliteDuplex:
+                                MainWindow.setUplink(self, uplink)
+                            else:
+                                MainWindow.setUplinkSimplex(self, uplink)
+                            last_uplink = uplink
+                        if not self.isDownlinkConstant:
+                            if (abs(int(last_downlink) - int(downlink)) > self.FREQUENCY_OFFSET_DOWNLINK):
+                                if self.isSatelliteDuplex:
+                                    MainWindow.setDownlink(self, downlink)
+                                else:
+                                    MainWindow.setDownlinkSimplex(self, downlink)
+                                last_downlink = downlink
+                        conn.send(b'RPRT 0')  # Return Data OK to gpredict
+                    elif data[0] in [102, 105]:  # i, f
+                        # read downlink or uplink from icom
+                        # and send it to gpredict
+                        if not self.isSatelliteDuplex:
+                            conn.send(b'RPRT')
+                        else:
+                            if data[0] == 102:  # f - gpredict ask for downlink
+                                print('** gpredict ask for downlink ')
+                                # ic9700.setVFO('SUB')
+                                actual_sub_frequency = ic9700.getFrequence()
+                                # TODO: proof if getFrequence was sucessfull
+                                # TODO: is getFrequence working properly for 1.2 GHz? issue of 1t character in string?
                                 downlink = actual_sub_frequency
                                 last_downlink = actual_sub_frequency
                                 print('** gp2icom: dial down: ' + actual_sub_frequency)
                                 b = bytearray()
                                 b.extend(map(ord, actual_sub_frequency + '\n'))
                                 conn.send(b)
-                        elif data[0] == 105:  # i - gpredict ask for uplink
-                            # we do not look for dial on uplink,
-                            # we just ignore it and send back the last uplink frequency
-                            print('** gp2icom: last uplink : ' + uplink)
-                            b = bytearray()
-                            b.extend(map(ord, uplink + '\n'))
-                            conn.send(b)
-                elif data[0] == 116:  # t ptt
-                    conn.send(b'0')
-                else:
-                    conn.send(b'RPRT 0')  # Return Data OK to gpredict
+                            elif data[0] == 105:  # i - gpredict ask for uplink
+                                # we do not look for dial on uplink,
+                                # we just ignore it and send back the last uplink frequency
+                                print('** gp2icom: last uplink : ' + uplink)
+                                b = bytearray()
+                                b.extend(map(ord, uplink + '\n'))
+                                conn.send(b)
+                    elif data[0] == 116:  # t ptt
+                        conn.send(b'0')
+                    else:
+                        conn.send(b'RPRT 0')  # Return Data OK to gpredict
             print('connect closed')
             conn.close()
 
     def setRitUp(self):
         self.rit += 25
+        self.ritLabel.setText(str(self.rit))
 
     def setRitDown(self):
         self.rit -= 25
-
-    def print_output(self, s):
-        print(s)
-
-    def thread_complete(self):
-        print("THREAD COMPLETE!")
-
-    def doLoop(self):
-        # Pass the function to execute
-        worker = Worker(self.execute_main_loop)  # Any other args, kwargs are passed to the run function
-        worker.signals.result.connect(self.print_output)
-        worker.signals.finished.connect(self.thread_complete)
-
-        # Execute
-        self.threadpool.start(worker)
-
-    def recurring_timer(self):
-        self.ritEdit.setText(str(self.rit))
+        self.ritLabel.setText(str(self.rit))
 
 
 ic9700 = icom.ic9700('/dev/ic9700a', '19200')

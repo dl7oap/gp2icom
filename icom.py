@@ -46,13 +46,13 @@ class ic9700:
                     b = b
                 else:
                     b = bytearray()
-        print('**** readFromIcom return value: ', b)
+        print('   * readFromIcom return value: ', b)
         return b
         
     # gives a empty bytearray when data crc is not valid
     def __writeToIcom(self, b):
         s = self.ser.write(b)
-        print('**** writeToIcom value: ', b)
+        print('   * writeToIcom value: ', b)
         return self.__readFromIcom()
 
     def close(self):
@@ -189,8 +189,24 @@ class ic9700:
             c = c[1:len(c)]
         return c
 
-    def getWhatIcomWantsToSay(self):
-        return self.__readFromIcom()
+    # CI-V transceive have to be ON
+    # function extract last frequency which is send to us when a user is dailing
+    def getWhatFrequencyIcomSendUs(self):
+        c = ''
+        b = self.__readFromIcom()
+        # find last CI-V message by searching from behind
+        position = b.rfind(bytearray(b'\xfe\xfe'))
+        if position >= 0:
+            # extract answer
+            answer = b[position:len(b)]
+            # proof if CI-V frequence message from icom
+            if len(answer) == 11 and answer[4] == 0:
+                if len(answer) > 0:
+                    for a in reversed(answer[5:10]):
+                        c = c + '%0.2X' % a
+                if c[0] == '0':
+                    c = c[1:len(c)]
+        return c
 
     def isPttOff(self):
         ret = True

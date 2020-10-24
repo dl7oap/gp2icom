@@ -395,75 +395,80 @@ class MainWindow(QMainWindow):
             print('Connected by', addr)
             while 1:
                 if self.isLoopActive:
-                    data = conn.recv(1000)
-                    print('\n######   LOOP   START   ######')
-                    print('gpredict: ' + data.decode('utf-8').replace('\n', ''))
-                    print('icom:', ic9700.getWhatIcomWantsToSay())
-                    ''' TODO: getWhatIcomWantsToSay is maybe a way not to read the download permanently
-                    to detect dailing of user, but be informed by TRX when user has set a new frequence'''
-                    if not data:
-                        break
-                    if self.rit != self.last_rit:
-                        ic9700.setRitFrequence(self.rit)
-                        self.last_rit = self.rit
-                        self.ritLabel.setText(str(self.rit))
-                    if data[0] in [70, 73]:  # I, F
-                        # get downlink and uplink from gpredict
-                        # and set downlink and uplink to icom
-                        cut = data.decode('utf-8').split(' ')
-                        if data[0] == 70:  # F - gpredict ask for downlink
-                            if self.isDownlinkConstant:
-                                downlink = last_downlink
-                            else:
-                                downlink = cut[len(cut) - 1].replace('\n', '')
-                        if data[0] == 73:  # I - gpredict ask for uplink
-                            uplink = cut[len(cut) - 1].replace('\n', '')
-                        print('** gp2icom: last  ^ ' + last_uplink + ' v ' + last_downlink)
-                        print('** gp2icom: fresh ^ ' + uplink + ' v ' + downlink)
-                        # only if uplink or downlink changed > 0 10Hz Column, then update
-                        if (abs(int(last_uplink) - int(uplink)) > self.FREQUENCY_OFFSET_UPLINK):
-                            if self.isSatelliteDuplex:
-                                MainWindow.setUplink(self, uplink)
-                            else:
-                                MainWindow.setUplinkSimplex(self, uplink)
-                            last_uplink = uplink
-                        if not self.isDownlinkConstant:
-                            if (abs(int(last_downlink) - int(downlink)) > self.FREQUENCY_OFFSET_DOWNLINK):
-                                if self.isSatelliteDuplex:
-                                    MainWindow.setDownlink(self, downlink)
+                    try:
+                        data = conn.recv(1000)
+                        print('\n######   LOOP   START   ######')
+                        print('gpredict: ' + data.decode('utf-8').replace('\n', ''))
+                        print('icom:', ic9700.getWhatIcomWantsToSay())
+                        ''' TODO: getWhatIcomWantsToSay is maybe a way not to read the download permanently
+                        to detect dailing of user, but be informed by TRX when user has set a new frequence'''
+                        if not data:
+                            break
+                        if self.rit != self.last_rit:
+                            ic9700.setRitFrequence(self.rit)
+                            self.last_rit = self.rit
+                            self.ritLabel.setText(str(self.rit))
+                        if data[0] in [70, 73]:  # I, F
+                            # get downlink and uplink from gpredict
+                            # and set downlink and uplink to icom
+                            cut = data.decode('utf-8').split(' ')
+                            if data[0] == 70:  # F - gpredict ask for downlink
+                                if self.isDownlinkConstant:
+                                    downlink = last_downlink
                                 else:
-                                    MainWindow.setDownlinkSimplex(self, downlink)
-                                last_downlink = downlink
-                        conn.send(b'RPRT 0')  # Return Data OK to gpredict
-                    elif data[0] in [102, 105]:  # i, f
-                        # read downlink or uplink from icom
-                        # and send it to gpredict
-                        if not self.isSatelliteDuplex:
-                            conn.send(b'RPRT')
+                                    downlink = cut[len(cut) - 1].replace('\n', '')
+                            if data[0] == 73:  # I - gpredict ask for uplink
+                                uplink = cut[len(cut) - 1].replace('\n', '')
+                            print('** gp2icom: last  ^ ' + last_uplink + ' v ' + last_downlink)
+                            print('** gp2icom: fresh ^ ' + uplink + ' v ' + downlink)
+                            # only if uplink or downlink changed > 0 10Hz Column, then update
+                            if (abs(int(last_uplink) - int(uplink)) > self.FREQUENCY_OFFSET_UPLINK):
+                                if self.isSatelliteDuplex:
+                                    MainWindow.setUplink(self, uplink)
+                                else:
+                                    MainWindow.setUplinkSimplex(self, uplink)
+                                last_uplink = uplink
+                            if not self.isDownlinkConstant:
+                                if (abs(int(last_downlink) - int(downlink)) > self.FREQUENCY_OFFSET_DOWNLINK):
+                                    if self.isSatelliteDuplex:
+                                        MainWindow.setDownlink(self, downlink)
+                                    else:
+                                        MainWindow.setDownlinkSimplex(self, downlink)
+                                    last_downlink = downlink
+                            conn.send(b'RPRT 0')  # Return Data OK to gpredict
+                        elif data[0] in [102, 105]:  # i, f
+                            # read downlink or uplink from icom
+                            # and send it to gpredict
+                            if not self.isSatelliteDuplex:
+                                conn.send(b'RPRT')
+                            else:
+                                if data[0] == 102:  # f - gpredict ask for downlink
+                                    print('** gpredict ask for downlink ')
+                                    # ic9700.setVFO('SUB')
+                                    actual_sub_frequency = ic9700.getFrequence()
+                                    # TODO: proof if getFrequence was sucessfull
+                                    # TODO: is getFrequence working properly for 1.2 GHz? issue of 1t character in string?
+                                    downlink = actual_sub_frequency
+                                    last_downlink = actual_sub_frequency
+                                    print('** gp2icom: dial down: ' + actual_sub_frequency)
+                                    b = bytearray()
+                                    b.extend(map(ord, actual_sub_frequency + '\n'))
+                                    conn.send(b)
+                                elif data[0] == 105:  # i - gpredict ask for uplink
+                                    # we do not look for dial on uplink,
+                                    # we just ignore it and send back the last uplink frequency
+                                    print('** gp2icom: last uplink : ' + uplink)
+                                    b = bytearray()
+                                    b.extend(map(ord, uplink + '\n'))
+                                    conn.send(b)
+                        elif data[0] == 116:  # t ptt
+                            conn.send(b'0')
                         else:
-                            if data[0] == 102:  # f - gpredict ask for downlink
-                                print('** gpredict ask for downlink ')
-                                # ic9700.setVFO('SUB')
-                                actual_sub_frequency = ic9700.getFrequence()
-                                # TODO: proof if getFrequence was sucessfull
-                                # TODO: is getFrequence working properly for 1.2 GHz? issue of 1t character in string?
-                                downlink = actual_sub_frequency
-                                last_downlink = actual_sub_frequency
-                                print('** gp2icom: dial down: ' + actual_sub_frequency)
-                                b = bytearray()
-                                b.extend(map(ord, actual_sub_frequency + '\n'))
-                                conn.send(b)
-                            elif data[0] == 105:  # i - gpredict ask for uplink
-                                # we do not look for dial on uplink,
-                                # we just ignore it and send back the last uplink frequency
-                                print('** gp2icom: last uplink : ' + uplink)
-                                b = bytearray()
-                                b.extend(map(ord, uplink + '\n'))
-                                conn.send(b)
-                    elif data[0] == 116:  # t ptt
-                        conn.send(b'0')
-                    else:
-                        conn.send(b'RPRT 0')  # Return Data OK to gpredict
+                            conn.send(b'RPRT 0')  # Return Data OK to gpredict
+                    except:
+                        print('connection maybe corrupt: close connection')
+                        conn.close()
+                        break
             print('connect closed')
             conn.close()
 

@@ -398,9 +398,6 @@ class MainWindow(QMainWindow):
                         data = conn.recv(1000)
                         print('\n###### LOOP START')
                         print('> gpredict: ' + data.decode('utf-8').replace('\n', ''))
-                        print('> icom:', ic9700.getWhatFrequencyIcomSendUs())
-                        ''' TODO: getWhatFrequencyIcomSendUs is a way not to read the download permanently
-                        to detect dailing of user, but be informed by TRX when user has set a new frequence'''
                         if not data:
                             break
                         if self.rit != self.last_rit:
@@ -416,6 +413,7 @@ class MainWindow(QMainWindow):
                                     downlink = last_downlink
                                 else:
                                     downlink = cut[len(cut) - 1].replace('\n', '')
+
                             if data[0] == 73:  # I - gpredict want to set Uplink
                                 uplink = cut[len(cut) - 1].replace('\n', '')
                             print('>> gp2icom: last  ^ ' + last_uplink + ' v ' + last_downlink)
@@ -434,6 +432,7 @@ class MainWindow(QMainWindow):
                                     else:
                                         MainWindow.setDownlinkSimplex(self, downlink)
                                     last_downlink = downlink
+
                             conn.send(b'RPRT 0')  # Return Data OK to gpredict
                         elif data[0] in [102, 105]:  # i, f
                             # read downlink or uplink from icom
@@ -443,9 +442,14 @@ class MainWindow(QMainWindow):
                             else:
                                 if data[0] == 102:  # f - gpredict ask for downlink
                                     print('>> gpredict: ask for downlink')
-                                    actual_sub_frequency = ic9700.getFrequence()
-                                    # TODO: proof if getFrequence was sucessfull
-                                    # TODO: is getFrequence working properly for 1.2 GHz? issue of 1t character in string?
+                                    # TODO: is getWhatFrequencyIcomSendUs working properly for 1.2 GHz? issue
+                                    #  of 1t character in string?
+                                    icomFrequency = ic9700.getWhatFrequencyIcomSendUs()
+                                    if len(icomFrequency) > 0:
+                                        actual_sub_frequency = icomFrequency
+                                    else:
+                                        actual_sub_frequency = downlink
+                                    print('> icom:', actual_sub_frequency)
                                     downlink = actual_sub_frequency
                                     last_downlink = actual_sub_frequency
                                     print('>> icom: says ' + actual_sub_frequency)

@@ -24,6 +24,7 @@ import sys
 import icom
 import time
 
+
 class Satellite:
     name = ""
     mode = ""  # SSB, FM, CW
@@ -39,18 +40,6 @@ class WorkerSignals(QObject):
 
 
 class Worker(QRunnable):
-    '''
-    Worker thread
-
-    Inherits from QRunnable to handler worker thread setup, signals and wrap-up.
-
-    :param callback: The function callback to run on this worker thread. Supplied args and
-                     kwargs will be passed through to the runner.
-    :type callback: function
-    :param args: Arguments to pass to the callback function
-    :param kwargs: Keywords to pass to the callback function
-
-    '''
 
     def __init__(self, fn, *args, **kwargs):
         super(Worker, self).__init__()
@@ -84,14 +73,13 @@ class Worker(QRunnable):
 
 
 class MainWindow(QMainWindow):
-
     HOST = '127.0.0.1'  # Standard loopback interface address (localhost)
     PORT_SERVER = 4532  # Port to listen on (non-privileged ports are > 1023)
     FREQUENCY_OFFSET_UPLINK = 40  # needed Uplinkfrequency shift in Hz before a correction is send to transceiver
     FREQUENCY_OFFSET_DOWNLINK = 25  # needed Downlinkfrequency shift in Hz before a correction is send to transceiver
 
-    rit = 0         #  rit to use
-    last_rit = 0    #  last rit which was set
+    rit = 0  # rit to use
+    last_rit = 0  # last rit which was set
 
     isSatelliteDuplex = True
     isDownlinkConstant = False
@@ -231,9 +219,11 @@ class MainWindow(QMainWindow):
         ic9700.setVFO('SUB')
         sub_frequency = ic9700.getFrequence()
 
-        if type_of_uplink_band == MainWindow.getBandFromFrequency(self, main_frequency):  # is uplink band in main -> nothing to do
+        if type_of_uplink_band == MainWindow.getBandFromFrequency(self,
+                                                                  main_frequency):  # is uplink band in main -> nothing to do
             return
-        elif type_of_uplink_band == MainWindow.getBandFromFrequency(self, sub_frequency):  # is uplink band in sub -> switch bands
+        elif type_of_uplink_band == MainWindow.getBandFromFrequency(self,
+                                                                    sub_frequency):  # is uplink band in sub -> switch bands
             ic9700.setExchange()
         else:  # is uplink band not in main and sub -> set band in main
             ic9700.setVFO('MAIN')
@@ -243,7 +233,6 @@ class MainWindow(QMainWindow):
                 ic9700.setFrequence('435000000')
             if type_of_uplink_band == '2M':
                 ic9700.setFrequence('145900000')
-
 
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
@@ -276,12 +265,10 @@ class MainWindow(QMainWindow):
         self.ritLabel = QLabel(self)
 
         layout.addWidget(comboSatellite, 0, 0)
-        #layout.addWidget(buttonDoLoop, 0, 2)
 
         layout.addWidget(buttonRitUp, 1, 0)
         layout.addWidget(buttonRitDown, 1, 1)
         layout.addWidget(self.ritLabel, 1, 2)
-
 
         radiobutton = QRadioButton('Sat constant')
         radiobutton.setChecked(True)
@@ -297,7 +284,6 @@ class MainWindow(QMainWindow):
         radiobutton.toggled.connect(self.onRadioButtonDownlinkConstantClicked)
         layout.addWidget(radiobutton, 4, 1)
 
-
         w = QWidget()
         w.setLayout(layout)
 
@@ -310,7 +296,6 @@ class MainWindow(QMainWindow):
         worker = Worker(self.execute_main_loop)  # Any other args, kwargs are passed to the run function
         # Execute
         self.threadpool.start(worker)
-
 
     def onRadioButtonDownlinkConstantClicked(self):
         self.isDownlinkConstant = True
@@ -463,7 +448,10 @@ class MainWindow(QMainWindow):
                             conn.send(b'0')
                         else:
                             conn.send(b'RPRT 0')  # Return Data OK to gpredict
-                    except:
+                    except Exception as e:
+                        print(type(e))
+                        print(e.args)
+                        print(e)
                         print('connection maybe corrupt or failure in loop: close connection')
                         conn.close()
                         break

@@ -21,7 +21,6 @@ you will here you exactly where you want to be.
 
 Update rate in gpredict:
 - For SIMPLEX and FM satellites i use an update rate of 10 seconds in gpredict. This is more then enough for FM.
-This script will turn on AFC function for FM  on the downlink of ic9700, this eleminate, too, the doppler effect.
 - For SSB/CW i use an update rate between 250ms and 800ms. So cw signals will be ok with 500ms.
 When you using the main dail knob to change the frequency 2000ms feels a little bit long. Because you have
 to wait until gpredict have catch the new downlink frequency and the new matching update frequency is
@@ -36,7 +35,6 @@ when you want to change the offset.
 At start the script always set:
 * with SSB the uplink in LSB and the downlink in USB. Most common satellites should work with this
 * with FM subtone 67 Hz will be activated on uplink
-* with FM will activate the AFC 
 * using CW the uplink is mode CW and the downlink will be USB
 * the script try to turn of repeater shifts (DUP+, DUP-)
 

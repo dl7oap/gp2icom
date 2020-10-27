@@ -151,7 +151,7 @@ class MainWindow(QMainWindow):
         ic9700.setVFO('VFOA')
         ic9700.setMode('FM')
         ic9700.setToneOn(False)
-        ic9700.setAfcOn(True)
+        ic9700.setAfcOn(False)  # you could set it to True, but gpredict is accurate, so you don't really need AFC
         ic9700.setRitFrequence(0)
         ic9700.setRitOn(False)
 

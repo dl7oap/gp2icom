@@ -467,7 +467,7 @@ class MainWindow(QMainWindow):
         self.ritLabel.setText(str(self.rit))
 
 
-ic9700 = icom.ic9700('/dev/ic9700a', '19200')
+ic9700 = icom.ic9700('/dev/ic9700a', '115200')
 app = QApplication([])
 window = MainWindow()
 app.exec_()

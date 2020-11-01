@@ -52,7 +52,7 @@ At start the script always set:
 - extract it to a folder of your choice
 - ensure that python 3.6 or higher is installed <code>python --version</code>
 - ensure that pyserial and pyqt5 is installed <code>pip install pyserial</code> and <code>pip install PyQt5</code>
-- open gp2ic9700.py in a text editor, find the following line near the end <code>ic9700 = icom.ic9700('/dev/ic9700a', '19200')</code> 
+- open gp2ic9700.py in a text editor, find the following line near the end <code>ic9700 = icom.ic9700('/dev/ic9700a', '115200')</code> 
 and replace /dev/ic9700a with your serial connection port. Example: 'COM5' on Windows or '/dev/ttyUSB0' on Linux.
 - start the script with <code>python gp2ic9700.py</code> 
 
@@ -84,3 +84,4 @@ or
 1. select a satellite
 2. start gpredict with a duplex trx on port 4532 and MAIN/SUB tracking a satellite
 3. optional: editing the satellites.txt with your needs
+

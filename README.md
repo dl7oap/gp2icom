@@ -4,15 +4,16 @@ Date    : 2020-09-01
 
 # General
 
-This script is plugged between gpredict and ic9700 based on python 3.7.
-It is listing on port 4532 for gpredict frequencies
-and it is sending frequencies and startsequences for ic9700 to serial port
+This Pythonscript is plugged between [gpredict](http://gpredict.oz9aec.net/ "Gpredict") and 
+[ICOM 9700](https://www.icomeurope.com/produkt/ic-9700/).
+It is listing on port 4532 for gpredict UDP packages and frequencies
+and it is sending frequencies and startsequences as CAT CI-V commands for ic9700 to the serial port.
 
 The main reason for this plugin or adapter is to have a smooth control of the 
-ic9700 for linear ssb satellites with gpredict.
+ic9700 for linear ssb satellites with gpredict (without to have to use hamlib).
  
 You can using the dail knob to sweep over the satellite transponder.
-the script updates the frequencies not by time intervall, but when a specified hertz offset is reached.
+The script updates the frequencies not by time intervall, but when a specified hertz offset is reached.
 this helps to avoid unnecessary updates and smooth the handling. 
 you can easily store your RIT for every satellite for USB/CW, so most of the time when you start on a ssb satellite 
 you will here you exactly where you want to be.
@@ -57,13 +58,30 @@ Windows 10
 * CI-V USB Baud Rate = 115200
 * CI-V USB Echo Back = OFF
 
+# Format of satellites.txt
+
+comma-delimited text file
+
+satellite_description,RIT_frequency,satellite_mode
+
+Example:
+
+<code>CAS-4A,SSB,-500,U/V<br>
+CAS-4A,CW,-1150,U/V<br>
+EO-88,SSB,-30,U/V<br>
+AO-7,SSB,0,U/V<br>
+AO-91,FM,0,U/V<br>
+ISS,FM,0,V/V<br>
+</code>
+
+
 # Start the programm
 
 Start the programm by typing this command into the shell 
 
 <code>python gp2ic9700.py</code>  
 or   
-<code>pyton3 gp2ic9700.py</code>
+<code>python3 gp2ic9700.py</code>
 
 1. select a satellite
 2. start gpredict with a duplex trx on port 4532 and MAIN/SUB tracking a satellite
@@ -74,10 +92,8 @@ or
 Update rate in gpredict:
 - For SIMPLEX and FM satellites i use an update rate of 10 seconds in gpredict. This is more then enough for FM.
 - For SSB/CW i use an update rate between 250ms and 800ms. So cw signals will be ok with 500ms.
-When you using the main dail knob to change the frequency 2000ms feels a little bit long. Because you have
-to wait until gpredict have catch the new downlink frequency and the new matching update frequency is
-send to ic9700. You have to play around with this :)
-But a update rate of ~30ms in gpredict will work for SSB/CW, too, with this script.
+- A update rate in SSB/CW greater then 2000ms will correct the uplink late when you are sweeping over the transponder 
+via the dial knob.
 
 The pythonscript will only send necessary updates, to calm down the display and reduce load on the CAT interface. 
 Only frequency shift greater then a defined Hz will be send to the transceiver.

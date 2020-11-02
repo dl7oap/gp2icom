@@ -89,71 +89,42 @@ class MainWindow(QMainWindow):
 
     #  ####################################################
 
-    def setStartSequenceSSB(self, usb=False):
-
-        # define uplink
-        ic9700.setVFO('Main')
-        ic9700.setVFO('VFOA')
-        ic9700.setRitFrequence(0)
-        ic9700.setRitOn(False)
-
-        if usb:
-            ic9700.setMode('USB')
-        else:
-            ic9700.setMode('LSB')
-        ic9700.setSplitOn(False)
-
-        # define downlink
-        ic9700.setVFO('SUB')
-        ic9700.setVFO('VFOA')
-        if usb:
-            ic9700.setMode('LSB')
-        else:
-            ic9700.setMode('USB')
-
-    def setStartSequenceCW(self, usb=False):
-
-        # define uplink
-        ic9700.setVFO('Main')
-        ic9700.setVFO('VFOA')
-        ic9700.setRitFrequence(0)
-        ic9700.setRitOn(False)
-
-        if usb:
-            ic9700.setMode('CW')
-        else:
-            ic9700.setMode('CW')
-        ic9700.setSplitOn(False)
-
-        # define downlink
-        ic9700.setVFO('SUB')
-        ic9700.setVFO('VFOA')
-        if usb:
-            ic9700.setMode('LSB')
-        else:
-            ic9700.setMode('USB')
-
-    def setStartSequenceFM(self):
-
-        # define uplink
+    def activateCorrectUplinkBandInMain(self, up_band):
+        freq = {'U': '433000000', 'V': '145900000', 'S': '1295000000'}
         ic9700.setVFO('MAIN')
+        if len(ic9700.setFrequence(freq.get(up_band))):
+            ic9700.setExchange()
+            ic9700.setFrequence(freq.get(up_band))
+
+    def setStartSequenceSatellite(self, uplinkMode):
+
+        # define uplink
+        ic9700.setVFO('Main')
         ic9700.setVFO('VFOA')
-        ic9700.setMode('FM')
-        ic9700.setSplitOn(False)
-        ic9700.setAfcOn(False)
         ic9700.setRitFrequence(0)
         ic9700.setRitOn(False)
-        ic9700.setToneHz('670')
-        ic9700.setToneOn(True)
+        ic9700.setMode(uplinkMode)
+        ic9700.setSplitOn(False)
+        if uplinkMode == 'FM':
+            ic9700.setAfcOn(False)
+            ic9700.setToneHz('670')
+            ic9700.setToneOn(True)
 
         # define downlink
         ic9700.setVFO('SUB')
         ic9700.setVFO('VFOA')
-        ic9700.setMode('FM')
-        ic9700.setToneOn(False)
-        ic9700.setAfcOn(False)  # you could set it to True, but gpredict is accurate, so you don't really need AFC
-        ic9700.setRitFrequence(0)
-        ic9700.setRitOn(False)
+        ic9700.setRitOn(True)
+        ic9700.setRitFrequence(int(self.rit))
+        if uplinkMode == 'USB':
+            ic9700.setMode('LSB')
+        else:
+            ic9700.setMode('USB')
+        if uplinkMode == 'FM':
+            ic9700.setMode('FM')
+            ic9700.setToneOn(False)
+            ic9700.setAfcOn(False)  # you could set it to True, but gpredict is accurate, so you don't really need AFC
+            ic9700.setRitFrequence(0)
+            ic9700.setRitOn(False)
 
     def setStartSequenceSimplex(self):
 
@@ -176,63 +147,24 @@ class MainWindow(QMainWindow):
         ic9700.setRitOn(False)
 
     def setUplink(self, up):
-
-        # set uplink frequency
         ic9700.setVFO('MAIN')
         ic9700.setFrequence(up)
         ic9700.setVFO('SUB')
 
     def setDownlink(self, dw):
-
-        # set uplink frequency
         # ic9700.setVFO('SUB')   # if user did not activate sub manually, we can speed up here
         ic9700.setFrequence(dw)
 
     def setUplinkSimplex(self, up):
-
-        # only update of frequencies if PTT off
         if ic9700.isPttOff():
-            # set uplink frequency
             ic9700.setVFO('VFOB')
             ic9700.setFrequence(up)
             ic9700.setVFO('VFOA')
 
     def setDownlinkSimplex(self, dw):
-
-        # only update of frequencies if PTT off
         if ic9700.isPttOff():
-            # set downlink frequency
             ic9700.setVFO('VFOA')
             ic9700.setFrequence(dw)
-
-    def getBandFromFrequency(self, frequency):
-        band = '2M'
-        if int(frequency) > 150000000:
-            band = '70CM'
-        if int(frequency) > 470000000:
-            band = '23CM'
-        return band
-
-    def activateCorrectUplinkBandInMain(self, type_of_uplink_band):
-        ic9700.setVFO('MAIN')
-        main_frequency = ic9700.getFrequence()
-        ic9700.setVFO('SUB')
-        sub_frequency = ic9700.getFrequence()
-
-        if type_of_uplink_band == MainWindow.getBandFromFrequency(self,
-                                                                  main_frequency):  # is uplink band in main -> nothing to do
-            return
-        elif type_of_uplink_band == MainWindow.getBandFromFrequency(self,
-                                                                    sub_frequency):  # is uplink band in sub -> switch bands
-            ic9700.setExchange()
-        else:  # is uplink band not in main and sub -> set band in main
-            ic9700.setVFO('MAIN')
-            if type_of_uplink_band == '23CM':
-                ic9700.setFrequence('1295000000')
-            if type_of_uplink_band == '70CM':
-                ic9700.setFrequence('435000000')
-            if type_of_uplink_band == '2M':
-                ic9700.setFrequence('145900000')
 
     def __init__(self, *args, **kwargs):
         super(MainWindow, self).__init__(*args, **kwargs)
@@ -244,7 +176,7 @@ class MainWindow(QMainWindow):
                     new_satellite.name = line.split(",")[0] + " " + line.split(",")[1]
                     new_satellite.mode = line.split(",")[1]
                     new_satellite.rit = line.split(",")[2]
-                    new_satellite.satmode = line.split(",")[3].replace("\n", "")
+                    new_satellite.satmode = line.split(",")[3].replace("\n", "").upper()
                     self.satellites.append(new_satellite)
         finally:
             fp.close()
@@ -310,45 +242,25 @@ class MainWindow(QMainWindow):
                 time.sleep(0.5)
 
                 ic9700.setSatelliteMode(False)
+                ic9700.setDualWatch(True)
 
-                # set correct bands in SUB and MAIN
-                if sat.satmode == 'U/V':
-                    self.activateCorrectUplinkBandInMain('70CM')
+                # set correct bands in SUB and MAIN für U/U, U/V, etc
+                satModeArray = sat.satmode.split('/')
+                self.activateCorrectUplinkBandInMain(satModeArray[0])
+                if satModeArray[0] != satModeArray[1]:
                     self.isSatelliteDuplex = True
-                if sat.satmode == 'V/U':
-                    self.activateCorrectUplinkBandInMain('2M')
-                    self.isSatelliteDuplex = True
-                if sat.satmode == 'S/U':
-                    self.activateCorrectUplinkBandInMain('23CM')
-                    self.isSatelliteDuplex = True
-                if sat.satmode == 'V/V':
-                    self.activateCorrectUplinkBandInMain('2M')
-                    self.isSatelliteDuplex = False
-                if sat.satmode == 'U/U':
-                    self.activateCorrectUplinkBandInMain('70CM')
-                    self.isSatelliteDuplex = False
-                if sat.satmode == 'S/S':
-                    self.activateCorrectUplinkBandInMain('23CM')
+                else:
                     self.isSatelliteDuplex = False
 
                 self.rit = int(sat.rit)
 
-                # TODO: implement choice of USB and LSB Mode Uplink
                 if self.isSatelliteDuplex:
                     if sat.mode == 'SSB':
-                        ic9700.setDualWatch(True)
-                        self.setStartSequenceSSB()
-                        ic9700.setVFO('SUB')
-                        ic9700.setRitOn(True)
-                        ic9700.setRitFrequence(int(self.rit))
+                        self.setStartSequenceSatellite('LSB')
                     if sat.mode == 'CW':
-                        ic9700.setDualWatch(True)
-                        self.setStartSequenceCW()
-                        ic9700.setVFO('SUB')
-                        ic9700.setRitOn(True)
-                        ic9700.setRitFrequence(int(self.rit))
+                        self.setStartSequenceSatellite('CW')
                     if sat.mode == 'FM':
-                        self.setStartSequenceFM()
+                        self.setStartSequenceSatellite('FM')
                 else:
                     self.setStartSequenceSimplex()
 

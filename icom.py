@@ -116,7 +116,7 @@ class ic9700:
         self.__writeToIcom(b)
 
     def setFrequence(self, frequence):
-        self.__writeToIcom(self.__generateIcomCIVsetFrequence(frequence))
+        return self.__writeToIcom(self.__generateIcomCIVsetFrequence(frequence))
 
     def setSql(self, value):
         # parameter value 0000 to 0255 as number not as string

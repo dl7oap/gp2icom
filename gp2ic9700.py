@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-'''
+"""
 Author  : Andreas Puschendorf, DL7OAP
 Version : 001
 Date    : 2020-09-01
@@ -13,7 +13,7 @@ Usage:
 1) select a satellite
 2) start gpredit tracking
 
-'''
+"""
 
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
@@ -55,9 +55,9 @@ class Worker(QRunnable):
 
     @pyqtSlot()
     def run(self):
-        '''
+        """
         Initialise the runner function with passed args, kwargs.
-        '''
+        """
 
         # Retrieve args/kwargs here; and fire processing using them
         try:

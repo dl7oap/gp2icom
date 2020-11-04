@@ -66,13 +66,12 @@ satellite_description,RIT_frequency,satellite_mode
 
 Example:
 
-<code>CAS-4A,SSB,-500,U/V<br>
-CAS-4A,CW,-1150,U/V<br>
-EO-88,SSB,-30,U/V<br>
-AO-7,SSB,0,U/V<br>
-AO-91,FM,0,U/V<br>
-ISS,FM,0,V/V<br>
-</code>
+CAS-4A,SSB,-500,U/V  
+CAS-4A,CW,-1150,U/V  
+EO-88,SSB,-30,U/V  
+AO-7,SSB,0,U/V  
+AO-91,FM,0,U/V  
+ISS,FM,0,V/V  
 
 
 # Start the programm

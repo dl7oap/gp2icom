@@ -1,22 +1,31 @@
 Author  : Andreas Puschendorf, DL7OAP
-Date    : 2020-09-01
+          Alex Krist, KR1ST
+Date    : 2020-11-01
 
 
 # General
 
 This Pythonscript is plugged between [gpredict](http://gpredict.oz9aec.net/ "Gpredict") and 
-[ICOM 9700](https://www.icomeurope.com/produkt/ic-9700/).
+[ICOM 9700](https://www.icomeurope.com/produkt/ic-9700/) or [ICOM 9100](https://www.icomeurope.com/produkt/ic-9100/).
 It is listing on port 4532 for gpredict UDP packages and frequencies
-and it is sending frequencies and startsequences as CAT CI-V commands for ic9700 to the serial port.
+and it is sending frequencies and startsequences as CAT CI-V commands for ic9700/ic9100 to the serial port.
 
 The main reason for this plugin or adapter is to have a smooth control of the 
-ic9700 for linear ssb satellites with gpredict (without to have to use hamlib).
+ic9700/ic9100 for linear ssb satellites with gpredict (without to have to use hamlib).
+
+This script is not using the satellit mode of the transceiver. It uses the main band as uplink and 
+the sub band as downlink. so the internal doppler effect correction can not disturb the work of gpredict. 
  
 You can using the dail knob to sweep over the satellite transponder.
 The script updates the frequencies not by time intervall, but when a specified hertz offset is reached.
-this helps to avoid unnecessary updates and smooth the handling. 
-you can easily store your RIT for every satellite for USB/CW, so most of the time when you start on a ssb satellite 
-you will here you exactly where you want to be.
+This helps to avoid unnecessary updates and smooth the handling. 
+You can easily store your RIT for every satellite for USB/CW, so most of the time when you start on a ssb satellite 
+you will here you exactly where you want to be. 
+
+This script does not control the RIT of the ICOM Transceiver, but it uses i virtual RIT which is added
+direct to the downlink frequence. This script will, adjust the main and sub VFO frequency for the 
+offset read from the satellites.txt file. By applying the frequency offset to the main and sub VFO's you 
+will still be able to use the RIT on the radio when needed.
 
 # Requirements
 
@@ -31,9 +40,10 @@ you will here you exactly where you want to be.
 - extract it to a folder of your choice
 - ensure that python 3.6 or higher is installed <code>python --version</code>
 - ensure that pyserial and pyqt5 is installed <code>pip install pyserial</code> and <code>pip install PyQt5</code>
-- open gp2ic9700.py in a text editor, find the following line near the end <code>ic9700 = icom.ic9700('/dev/ic9700a', '115200')</code> 
+- open gp2icom.py in a text editor, find the following line near the end <code>icomTrx = icom.icom('/dev/ic9700a', '115200', 162)</code> 
 and replace /dev/ic9700a with your serial connection port. Example: 'COM5' on Windows or '/dev/ttyUSB0' on Linux.
-- start the script with <code>python gp2ic9700.py</code> 
+- 162 is the CI-V adress (hex A2), for IC9100 use 124 (hex 7C)
+- start the script with <code>python gp2icom.py</code> or <code>python gp2icom.py -debug</code>
 
 Here it is working with Linux (Ubuntu) and Windows 10.
 
@@ -73,14 +83,15 @@ AO-7,SSB,0,U/V
 AO-91,FM,0,U/V  
 ISS,FM,0,V/V  
 
+Hint: the script can handle L=23cm, U=70cm, V=2m
 
 # Start the programm
 
 Start the programm by typing this command into the shell 
 
-<code>python gp2ic9700.py</code>  
+<code>python gp2icom.py</code>  
 or   
-<code>python3 gp2ic9700.py</code>
+<code>python3 gp2icom.py</code>
 
 1. select a satellite
 2. start gpredict with a duplex trx on port 4532 and MAIN/SUB tracking a satellite
@@ -104,3 +115,13 @@ At start the script always set:
 * with FM subtone 67 Hz will be activated on uplink
 * using CW the uplink is mode CW and the downlink will be USB
 * the script try to turn of repeater shifts (DUP+, DUP-)
+* the script try to turn of the transceiver RIT
+
+# GQRX Support
+
+This script also adds support for up to three Gqrx instances to act as panadapters, or to use as separate receivers. 
+The frequencies that the Gqrx instances are tuned to are in sync with the radio main and sub VFO's. 
+The Gqrx ports that this script will send frequency information to are defined by PORT_GQRX_VHF, PORT_GQRX_UHF, and
+PORT_GQRX_SHF.
+
+

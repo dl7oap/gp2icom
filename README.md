@@ -27,16 +27,21 @@ direct to the downlink frequence. This script will, adjust the main and sub VFO 
 offset read from the satellites.txt file. By applying the frequency offset to the main and sub VFO's you 
 will still be able to use the RIT on the radio when needed.
 
+This script also adds support for up to three Gqrx instances to act as panadapters, or to use as separate receivers. 
+The frequencies that the Gqrx instances are tuned to are in sync with the radio main and sub VFO's. 
+The Gqrx ports that this script will send frequency information to are defined by PORT_GQRX_VHF, PORT_GQRX_UHF, and
+PORT_GQRX_SHF.
+
 # Requirements
 
-* Linux or Windows 10
+* Linux or Windows 10 (tested with Win10, Ubuntu 18.04, Raspberry Pi 4B)
 * gpredict version 2.3.* (older should also possible)
 * python 3.7 (python 2.* will not work)
 * python modul pyserial and PyQt5
 
 # Installation
 
-- download sourcecode as zip-file https://github.com/dl7oap/gp2ic9700/archive/master.zip
+- download sourcecode as zip-file https://github.com/dl7oap/gp2icom/archive/master.zip
 - extract it to a folder of your choice
 - ensure that python 3.6 or higher is installed <code>python --version</code>
 - ensure that pyserial and pyqt5 is installed <code>pip install pyserial</code> and <code>pip install PyQt5</code>
@@ -45,7 +50,6 @@ and replace /dev/ic9700a with your serial connection port. Example: 'COM5' on Wi
 - 162 is the CI-V adress (hex A2), for IC9100 use 124 (hex 7C)
 - start the script with <code>python gp2icom.py</code> or <code>python gp2icom.py -debug</code>
 
-Here it is working with Linux (Ubuntu) and Windows 10.
 
 GUI:
 
@@ -62,10 +66,22 @@ Windows 10
 
 ![engage](engage.png)
 
+# Configuration in gqrx
+
+* Set the port in menu "Tools > Remote control settings > Listen on port" 
+    use one of the default ports in this script VHF = 7300, UHF = 7301, SHF = 7302
+* activate remote control via menu "Tools > Remote control"
+
 # Configuration ICOM 9700
 
 * CI-V Transceive = ON
 * CI-V USB Baud Rate = 115200
+* CI-V USB Echo Back = OFF
+
+# Configuration ICOM 9100
+
+* CI-V Transceive = ON
+* CI-V USB Baud Rate = 19200
 * CI-V USB Echo Back = OFF
 
 # Format of satellites.txt
@@ -116,12 +132,3 @@ At start the script always set:
 * using CW the uplink is mode CW and the downlink will be USB
 * the script try to turn of repeater shifts (DUP+, DUP-)
 * the script try to turn of the transceiver RIT
-
-# GQRX Support
-
-This script also adds support for up to three Gqrx instances to act as panadapters, or to use as separate receivers. 
-The frequencies that the Gqrx instances are tuned to are in sync with the radio main and sub VFO's. 
-The Gqrx ports that this script will send frequency information to are defined by PORT_GQRX_VHF, PORT_GQRX_UHF, and
-PORT_GQRX_SHF.
-
-

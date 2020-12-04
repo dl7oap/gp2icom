@@ -169,7 +169,7 @@ class MainWindow(QMainWindow):
         icomTrx.setMode('FM')
         icomTrx.setToneOn(False)
         icomTrx.setSplitOn(True)
-        icomTrx.setAfcOn(True)
+        icomTrx.setAfcOn(False)
         icomTrx.setRitFrequence(0)
         icomTrx.setRitOn(False)
 
@@ -362,7 +362,6 @@ class MainWindow(QMainWindow):
                                 icomTrx.setVFO('MAIN')
                                 icomTrx.setVFO('VFOA')
                             # get the rig's downlink frequency, subtract old RIT, add new RIT and send that to the radio
-                            # TODO: really getFrequence from TRX or is it even possible to use a internal variable? DL7OAP
                             actual_sub_frequency = icomTrx.getFrequence()
                             actual_downlink_frequency = str(int(actual_sub_frequency) - int(self.last_rit))
                             if self.isSatelliteDuplex:
@@ -401,15 +400,16 @@ class MainWindow(QMainWindow):
                                 else:
                                     MainWindow.setUplinkSimplex(self, uplink)
                                 last_uplink = uplink
-                                # gqrx part
-                                b = bytearray()
-                                b.extend(map(ord, 'F ' + uplink + '\n'))
-                                if uplink[1] == '4' and port_vhf_open == 0:
-                                    sock_gqrx_vhf.sendall(b)
-                                elif uplink[1] == '3' and port_uhf_open == 0:
-                                    sock_gqrx_uhf.sendall(b)
-                                elif uplink[1] == '2' and port_shf_open == 0:
-                                    sock_gqrx_shf.sendall(b)
+                                # # gqrx part
+                                if self.isSatelliteDuplex:
+                                    b = bytearray()
+                                    b.extend(map(ord, 'F ' + uplink + '\n'))
+                                    if uplink[1] == '4' and port_vhf_open == 0:
+                                        sock_gqrx_vhf.sendall(b)
+                                    elif uplink[1] == '3' and port_uhf_open == 0:
+                                        sock_gqrx_uhf.sendall(b)
+                                    elif uplink[1] == '2' and port_shf_open == 0:
+                                        sock_gqrx_shf.sendall(b)
                             if not self.isDownlinkConstant:
                                 if (abs(int(last_downlink) - int(downlink)) > self.FREQUENCY_OFFSET_DOWNLINK):
                                     if self.isSatelliteDuplex:

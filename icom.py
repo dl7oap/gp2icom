@@ -135,6 +135,19 @@ class icom:
                 back = True
         return back
 
+    # Caution: hex 25 CI-V Command only for IC-9700
+    def setFrequenceOffUnselectVFO(self, freq):
+        freq = '0000000000' + freq
+        freq = freq[-10:]
+        b = b'\x25\x01' + bytes([int(freq[8:10], 16), int(freq[6:8], 16), int(freq[4:6], 16),
+                   int(freq[2:4], 16), int(freq[0:2], 16)])
+        returnMsg = self.__writeToIcom(b)
+        back = False
+        if len(returnMsg) > 0:
+            if returnMsg.count(b'\xfb') > 0:
+                back = True
+        return back
+
     def setSql(self, value):
         # parameter value 0000 to 0255 as number not as string
         squelch = '0000' + str(abs(value))

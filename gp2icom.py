@@ -184,9 +184,13 @@ class MainWindow(QMainWindow):
 
     def setUplinkSimplex(self, up):
         if icomTrx.isPttOff():
-            icomTrx.setVFO('VFOB')
-            icomTrx.setFrequence(up)
-            icomTrx.setVFO('VFOA')
+            # icom 9700 can set the unselected VFO within the MAIN directly
+            if icomTrx.icomTrxCivAdress == 162:
+                icomTrx.setFrequenceOffUnselectVFO(up)
+            else:
+                icomTrx.setVFO('VFOB')
+                icomTrx.setFrequence(up)
+                icomTrx.setVFO('VFOA')
 
     def setDownlinkSimplex(self, dw):
         if icomTrx.isPttOff():

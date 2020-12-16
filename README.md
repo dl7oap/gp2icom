@@ -82,7 +82,6 @@ Windows 10
 
 * CI-V Transceive = ON
 * CI-V USB Baud Rate = 19200
-* CI-V USB Echo Back = OFF
 
 # Format of satellites.txt
 

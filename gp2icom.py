@@ -153,12 +153,17 @@ class MainWindow(QMainWindow):
             icomTrx.setToneOn(False)
             icomTrx.setAfcOn(False)  # you could set it to True, but gpredict is accurate, so you don't really need AFC
 
-    def setStartSequenceSimplex(self):
+    def setStartSequenceSimplex(self, uplinkMode):
 
         # define uplink
         icomTrx.setVFO('MAIN')
         icomTrx.setVFO('VFOB')
-        icomTrx.setMode('FM')
+        if uplinkMode == 'FM':
+            icomTrx.setMode('FM')
+        if uplinkMode == 'FM-D':
+            icomTrx.setMode('FM-D')
+        if uplinkMode == 'SSB-D':
+            icomTrx.setMode('USB-D')
         icomTrx.setToneOn(False)
         icomTrx.setAfcOn(False)
         icomTrx.setRitFrequence(0)
@@ -166,7 +171,12 @@ class MainWindow(QMainWindow):
 
         # define downlink
         icomTrx.setVFO('VFOA')
-        icomTrx.setMode('FM')
+        if uplinkMode == 'FM':
+            icomTrx.setMode('FM')
+        if uplinkMode == 'FM-D':
+            icomTrx.setMode('FM-D')
+        if uplinkMode == 'SSB-D':
+            icomTrx.setMode('USB-D')
         icomTrx.setToneOn(False)
         icomTrx.setSplitOn(True)
         icomTrx.setAfcOn(False)
@@ -293,7 +303,12 @@ class MainWindow(QMainWindow):
                     if sat.mode == 'FM':
                         self.setStartSequenceSatellite('FM')
                 else:
-                    self.setStartSequenceSimplex()
+                    if sat.mode == 'FM':
+                        self.setStartSequenceSimplex('FM')
+                    if sat.mode == 'FM-D':
+                        self.setStartSequenceSimplex('FM-D')
+                    if sat.mode == 'SSB-D':
+                        self.setStartSequenceSimplex('SSB-D')
 
                 self.isLoopActive = True
                 break

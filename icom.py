@@ -70,10 +70,19 @@ class icom:
         mode = mode.upper()
         if mode == 'FM':
             self.__writeToIcom(b'\x06\x05\x01')
+            self.__writeToIcom(b'\x1a\x06\x00\x00')
+        if mode == 'FM-D':
+            self.__writeToIcom(b'\x06\x05\x01')
+            self.__writeToIcom(b'\x1a\x06\x01\x01')
         if mode == 'USB':
             self.__writeToIcom(b'\x06\x01\x02')
+            self.__writeToIcom(b'\x1a\x06\x00\x00')
+        if mode == 'USB-D':
+            self.__writeToIcom(b'\x06\x01\x02')
+            self.__writeToIcom(b'\x1a\x06\x01\x03')
         if mode == 'LSB':
             self.__writeToIcom(b'\x06\x00\x02')
+            self.__writeToIcom(b'\x1a\x06\x00\x00')
         if mode == 'CW':
             self.__writeToIcom(b'\x06\x03\x01')
         if mode == 'AM':
